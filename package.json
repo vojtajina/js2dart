@@ -1,0 +1,15 @@
+{
+  "name": "js2dart",
+  "version": "0.0.0",
+  "description": "Compile JavaScript to Dart so that you can compile it back to JavaScript and run.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vojta Jina <vojta.jina@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "q": "^1.0.1",
+    "traceur": "0.0.61"
+  }
+}
