@@ -14,16 +14,19 @@ var JavaScriptParseTreeWriter = traceur.outputgeneration.ParseTreeWriter;
 function DartTreeWriter() {
   JavaScriptParseTreeWriter.call(this);
 
+  // FUNCTIONS
+  // - remove the "function" keyword
   this.visitFunction_ = function(tree) {
     this.writeAnnotations_(tree.annotations);
-    if (tree.isAsyncFunction())
+    if (tree.isAsyncFunction()) {
       this.write_(tree.functionKind);
-    // this.write_(FUNCTION);
-    if (tree.isGenerator())
+    }
+
+    if (tree.isGenerator()) {
       this.write_(tree.functionKind);
+    }
 
     if (tree.name) {
-      // this.writeSpace_();
       this.visitAny(tree.name);
     }
 
