@@ -2,7 +2,7 @@ var gulp = require('gulp');
 var rename = require('gulp-rename');
 var watch = require('gulp-watch');
 var js2dart = require('./gulp-js2dart');
-
+var shell = require('gulp-shell');
 
 gulp.task('spec/build', function() {
   return gulp
@@ -20,3 +20,8 @@ gulp.task('spec/watch', function() {
     .pipe(rename({extname: '.dart'}))
     .pipe(gulp.dest('spec'))
 });
+
+
+gulp.task('test', ['spec/build'], shell.task([
+  'dart --checked run_specs.dart'
+]));
