@@ -6,7 +6,7 @@ var js2dart = require('./gulp-js2dart');
 
 gulp.task('spec/build', function() {
   return gulp
-    .src('spec/*.js')
+    .src('spec/**/*.js')
     .pipe(js2dart())
     .pipe(rename({extname: '.dart'}))
     .pipe(gulp.dest('spec'))
@@ -15,7 +15,7 @@ gulp.task('spec/build', function() {
 
 // TODO(vojta): Rebuild when changing src/* as well.
 gulp.task('spec/watch', function() {
-  return watch('spec/*.js')
+  return watch('spec/**/*.js')
     .pipe(js2dart())
     .pipe(rename({extname: '.dart'}))
     .pipe(gulp.dest('spec'))
