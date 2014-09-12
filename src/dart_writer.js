@@ -8,6 +8,7 @@ var OPEN_CURLY = token.OPEN_CURLY;
 var CLOSE_CURLY = token.CLOSE_CURLY;
 var COMMA = token.COMMA;
 var FROM = traceur.syntax.PredefinedName.FROM;
+var AT = token.AT;
 
 var JavaScriptParseTreeWriter = traceur.outputgeneration.ParseTreeWriter;
 
@@ -97,6 +98,22 @@ function DartTreeWriter() {
       this.writeList_(tree.specifiers, COMMA, false);
     }
   };
+
+
+  // ANNOTATIONS
+  // TODO(vojta): this is just fixing a bug in Traceur, send a PR.
+  this.visitAnnotation = function(tree) {
+    this.write_(AT);
+    this.visitAny(tree.name);
+
+    if (tree.args !== null) {
+      this.write_(OPEN_PAREN);
+      this.writeList_(tree.args.args, COMMA, false);
+      this.write_(CLOSE_PAREN);
+    }
+
+    this.writeSpace_()
+  }
 }
 
 DartTreeWriter.prototype = Object.create(JavaScriptParseTreeWriter.prototype);
