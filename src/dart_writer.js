@@ -94,8 +94,7 @@ function DartTreeWriter() {
       throw new Error('"*" syntax not supported');
     } else {
       this.write_(' show ');
-      // TODO(vojta): no new line in the list
-      this.writelnList_(tree.specifiers, COMMA);
+      this.writeList_(tree.specifiers, COMMA, false);
     }
   };
 }
