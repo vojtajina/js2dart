@@ -1,17 +1,17 @@
 // TODO(vojta): generate this file.
 
-import './spec/basic_functions.dart' as m1;
-import './spec/class.dart' as m2;
+import './spec/functions.dart' as m1;
+import './spec/classes.dart' as m2;
 import './spec/imports.dart' as m3;
 
 import 'package:unittest/unittest.dart';
 
 void main() {
-  test('./spec/basic_functions.dart', () {
+  test('./spec/functions.dart', () {
     m1.main();
   });
 
-  test('./spec/class.dart', () {
+  test('./spec/classes.dart', () {
     m2.main();
   });
 
