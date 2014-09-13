@@ -1,4 +1,3 @@
-spec/**/*.dart
 node_modules
 packages
 .last_spec_pointer
