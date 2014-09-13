@@ -9,8 +9,7 @@ function EcmaScript6ToDartCompiler() {
   var options = {
     annotations: true, // parse annotations
     types: true, // parse types
-    script: false, // parse as a module
-    filename: 'foo.js'
+    script: false // parse as a module
   };
 
   NodeCompiler.call(this, options);
