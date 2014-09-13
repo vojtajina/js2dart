@@ -12,11 +12,13 @@ var AT = token.AT;
 
 var JavaScriptParseTreeWriter = traceur.outputgeneration.ParseTreeWriter;
 
+
 function DartTreeWriter() {
   JavaScriptParseTreeWriter.call(this);
 
   // FUNCTIONS
   // - remove the "function" keyword
+  // - type annotation infront
   this.visitFunction_ = function(tree) {
     this.writeAnnotations_(tree.annotations);
     if (tree.isAsyncFunction()) {
@@ -28,15 +30,94 @@ function DartTreeWriter() {
     }
 
     if (tree.name) {
+      this.writeType_(tree.typeAnnotation);
       this.visitAny(tree.name);
     }
 
     this.write_(OPEN_PAREN);
     this.visitAny(tree.parameterList);
     this.write_(CLOSE_PAREN);
-    this.writeTypeAnnotation_(tree.typeAnnotation);
     this.writeSpace_();
     this.visitAny(tree.body);
+  };
+
+  // Class methods.
+  // - type annotation infront
+  this.visitPropertyMethodAssignment = function (tree) {
+    this.writeAnnotations_(tree.annotations);
+
+    if (tree.isStatic) {
+      this.write_(STATIC);
+      this.writeSpace_();
+    }
+
+    if (tree.isGenerator()) {
+      this.write_(STAR);
+    }
+
+    if (tree.isAsyncFunction()) {
+      this.write_(ASYNC);
+    }
+
+    this.writeType_(tree.typeAnnotation);
+    this.visitAny(tree.name);
+    this.write_(OPEN_PAREN);
+    this.visitAny(tree.parameterList);
+    this.write_(CLOSE_PAREN);
+    this.writeSpace_();
+    this.visitAny(tree.body);
+  }
+
+  this.normalizeType_ = function(typeName) {
+    if (typeName === 'number') {
+      return 'int';
+    }
+
+    if (typeName === 'boolean') {
+      return 'bool';
+    }
+
+    return typeName;
+  };
+
+  // FUNCTION/METHOD ARGUMENTS
+  // - type infront of the arg name
+  this.visitBindingElement = function(tree) {
+    // TODO(vojta): This is awful, just copy/pasted from Traceur,
+    // we should still clean it up.
+    var typeAnnotation = this.currentParameterTypeAnnotation_;
+    // resetting type annotation so it doesn't filter down recursively
+    this.currentParameterTypeAnnotation_ = null;
+
+    this.writeType_(typeAnnotation);
+    this.visitAny(tree.binding);
+
+    if (tree.initializer) {
+      this.writeSpace_();
+      this.write_(EQUAL);
+      this.writeSpace_();
+      this.visitAny(tree.initializer);
+    }
+  };
+
+  this.visitClassField = function(tree) {
+    this.writeType_(tree.typeAnnotation);
+
+    if (!tree.typeAnnotation) {
+      this.write_('var ');
+    }
+
+    this.write_(tree.identifier);
+    this.write_(SEMI_COLON);
+  };
+
+  this.writeType_ = function(typeAnnotation) {
+    if (!typeAnnotation) {
+      return;
+    }
+
+    this.write_(this.normalizeType_(typeAnnotation.typeToken.value));
+    this.writeSpace_();
   };
 
 

@@ -19,6 +19,7 @@ var propName = traceur.staticsemantics.propName;
 
 var createVariableStatement = traceur.codegeneration.ParseTreeFactory.createVariableStatement;
 
+var ClassFieldParseTree = require('./ast/class_field');
 
 // - rename constructor (name of the class - default Dart constructor)
 // - collect fields (set in the constructor) and define them as class fields
@@ -27,30 +28,38 @@ function ClassTransformer() {
 
   this.transformClassDeclaration = function(tree) {
     var className = tree.name.identifierToken.toString();
-
+    var argumentTypesMap = {};
     var fields = [];
+
     tree.elements.forEach(function(elementTree) {
       if (elementTree.type === PROPERTY_METHOD_ASSIGNMENT &&
           !elementTree.isStatic &&
           propName(elementTree) === CONSTRUCTOR) {
 
+        // Store constructor argument types,
+        // so that we can use them to set the types of simple-assigned fields.
+        elementTree.parameterList.parameters.forEach(function(p) {
+          argumentTypesMap[p.parameter.binding.identifierToken.value] = p.typeAnnotation;
+        });
+
         // Rename "constructor" to the class name.
         elementTree.name.literalToken.value = className;
 
         // Collect all fields, defined in the constructor.
-        // TODO(vojta): Types
         elementTree.body.statements.forEach(function(statement) {
           if (statement.expression.type === BINARY_EXPRESSION &&
               statement.expression.operator.type === '=' &&
               statement.expression.left.type === MEMBER_EXPRESSION &&
               statement.expression.left.operand.type === THIS_EXPRESSION) {
-            fields.push(createVariableStatement(new Token('var'), statement.expression.left.memberName.value, null));
+
+            var typeAnnotation = argumentTypesMap[statement.expression.left.memberName.value] || null;
+            fields.push(new ClassFieldParseTree(tree.location, statement.expression.left.memberName, typeAnnotation));
           }
         });
       }
     });
 
-    // Add the field definition to the begining of the class.
+    // Add the field definitions to the begining of the class.
     tree.elements = fields.concat(tree.elements);
 
     return tree;
