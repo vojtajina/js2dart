@@ -4,6 +4,7 @@ import './spec/functions.dart' as m1;
 import './spec/classes.dart' as m2;
 import './spec/imports.dart' as m3;
 import './spec/annotations.dart' as m4;
+import './spec/equals.dart' as m5;
 
 import 'package:unittest/unittest.dart';
 
@@ -30,5 +31,9 @@ void main() {
     List<InstanceMirror> metadata = reflectClass(m4.Foo).metadata;
     assert(metadata.length == 1);
     assert(metadata.first.reflectee is annotations.Provide);
+  });
+
+  test('./spec/equals.dart', () {
+    m5.main();
   });
 }

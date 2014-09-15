@@ -9,7 +9,7 @@ var PROPERTY_METHOD_ASSIGNMENT = parseToken.PROPERTY_METHOD_ASSIGNMENT;
 var MEMBER_EXPRESSION = parseToken.MEMBER_EXPRESSION;
 var THIS_EXPRESSION = parseToken.THIS_EXPRESSION;
 var BINARY_EXPRESSION = 'BINARY_EXPRESSION';
-
+var EQUAL_EQUAL_EQUAL = traceur.syntax.TokenType.EQUAL_EQUAL_EQUAL;
 var CONSTRUCTOR = traceur.syntax.PredefinedName.CONSTRUCTOR;
 
 
@@ -18,6 +18,10 @@ var propName = traceur.staticsemantics.propName;
 
 
 var createVariableStatement = traceur.codegeneration.ParseTreeFactory.createVariableStatement;
+var createCallExpression = traceur.codegeneration.ParseTreeFactory.createCallExpression;
+var createIdentifierExpression = traceur.codegeneration.ParseTreeFactory.createIdentifierExpression;
+var createArgumentList = traceur.codegeneration.ParseTreeFactory.createArgumentList;
+
 
 var ClassFieldParseTree = require('./ast/class_field');
 
@@ -25,6 +29,17 @@ var ClassFieldParseTree = require('./ast/class_field');
 // - collect fields (set in the constructor) and define them as class fields
 function ClassTransformer() {
   ParseTreeTransformer.call(this);
+
+  // Transform triple equals into identical() call.
+  // TODO(vojta): move to a separate transformer
+  this.transformBinaryExpression = function(tree) {
+    if (tree.operator.type === EQUAL_EQUAL_EQUAL) {
+      // a === b -> identical(a, b)
+      return createCallExpression(createIdentifierExpression('identical'), createArgumentList([tree.left, tree.right]));
+    }
+
+    return tree;
+  };
 
   this.transformClassDeclaration = function(tree) {
     var className = tree.name.identifierToken.toString();
