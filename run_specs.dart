@@ -5,6 +5,7 @@ import './spec/classes.dart' as m2;
 import './spec/imports.dart' as m3;
 import './spec/annotations.dart' as m4;
 import './spec/equals.dart' as m5;
+import './spec/types.dart' as m6;
 
 import 'package:unittest/unittest.dart';
 
@@ -35,5 +36,13 @@ void main() {
 
   test('./spec/equals.dart', () {
     m5.main();
+  });
+
+  test('./spec/types.dart', () {
+    // TODO(vojta): test this better.
+    var f = new m6.Foo(1, 2);
+    assert(f.sum() == 3);
+
+    f.typedVariables();
   });
 }

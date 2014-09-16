@@ -12,6 +12,8 @@ var BINARY_EXPRESSION = 'BINARY_EXPRESSION';
 var EQUAL_EQUAL_EQUAL = traceur.syntax.TokenType.EQUAL_EQUAL_EQUAL;
 var CONSTRUCTOR = traceur.syntax.PredefinedName.CONSTRUCTOR;
 
+var VariableDeclarationList = traceur.syntax.trees.VariableDeclarationList;
+var VariableStatement = traceur.syntax.trees.VariableStatement;
 
 var Token = traceur.syntax.Token;
 var propName = traceur.staticsemantics.propName;
@@ -29,6 +31,48 @@ var ClassFieldParseTree = require('./ast/class_field');
 // - collect fields (set in the constructor) and define them as class fields
 function ClassTransformer() {
   ParseTreeTransformer.call(this);
+
+  // Transform multi-var declarations, into multiple statements:
+  // var x, y;
+  // ==>
+  // var x;
+  // var y;
+  // TODO(vojta): move this into a separate transformer.
+
+  // Individual item transformer can return an array of items.
+  // This is used in `transformVariableStatement`.
+  // Otherwise this is copy/pasted from `ParseTreeTransformer`.
+  this.transformList = function(list) {
+    var transformedList = [];
+    var transformedItem = null;
+
+    for (var i = 0, ii = list.length; i < ii; i++) {
+      transformedItem = this.transformAny(list[i]);
+      if (Array.isArray(transformedItem)) {
+        transformedList = transformedList.concat(transformedItem);
+      } else {
+        transformedList.push(transformedItem);
+      }
+    }
+
+    return transformedList;
+  };
+
+  this.transformVariableStatement = function(tree) {
+    var declarations = tree.declarations.declarations;
+
+    if (declarations.length === 1 || declarations.length === 0) {
+      return tree;
+    }
+
+    // Multiple var declaration, we will split it into multiple statements.
+    // TODO(vojta): We can leave the multi-definition as long as they are all the same type/untyped.
+    return declarations.map(function(declaration) {
+      return new VariableStatement(tree.location, new VariableDeclarationList(tree.location,
+          tree.declarations.declarationType, [declaration]));
+    });
+  }
+
 
   // Transform triple equals into identical() call.
   // TODO(vojta): move to a separate transformer
@@ -77,7 +121,7 @@ function ClassTransformer() {
     // Add the field definitions to the begining of the class.
     tree.elements = fields.concat(tree.elements);
 
-    return tree;
+    return ParseTreeTransformer.prototype.transformClassDeclaration.call(this, tree)
   };
 }
 

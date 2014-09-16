@@ -16,4 +16,12 @@ class Foo {
   sum(): number {
     return this.a + this.b;
   }
+
+  typedVariables() {
+    // TODO(vojta): test this
+    var foo:string = 'foo';
+    var typed:bool, untyped;
+    var oneTyped:string = 'one',
+        another: bool = true;
+  }
 }

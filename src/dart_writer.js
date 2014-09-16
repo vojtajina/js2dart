@@ -9,12 +9,41 @@ var CLOSE_CURLY = token.CLOSE_CURLY;
 var COMMA = token.COMMA;
 var FROM = traceur.syntax.PredefinedName.FROM;
 var AT = token.AT;
+var EQUAL = token.EQUAL;
 
 var JavaScriptParseTreeWriter = traceur.outputgeneration.ParseTreeWriter;
 
 
 function DartTreeWriter() {
   JavaScriptParseTreeWriter.call(this);
+
+  // VARIABLES - types
+  // ```
+  // var foo:bool = true;
+  // ==>
+  // bool foo = true;
+  // ```
+  this.visitVariableDeclarationList = function(tree) {
+    // Write `var`, only if no type declaration.
+    if (!tree.declarations[0].typeAnnotation) {
+      this.write_(tree.declarationType);
+      this.writeSpace_();
+    }
+
+    this.writeList_(tree.declarations, COMMA, true, 2);
+  };
+
+  this.visitVariableDeclaration = function(tree) {
+    this.writeType_(tree.typeAnnotation);
+    this.visitAny(tree.lvalue);
+
+    if (tree.initializer !== null) {
+      this.writeSpace_();
+      this.write_(EQUAL);
+      this.writeSpace_();
+      this.visitAny(tree.initializer);
+    }
+  }
 
   // FUNCTIONS
   // - remove the "function" keyword
@@ -116,7 +145,15 @@ function DartTreeWriter() {
       return;
     }
 
-    this.write_(this.normalizeType_(typeAnnotation.typeToken.value));
+    // TODO(vojta): Figure out why `typeAnnotation` has different structure when used with a variable.
+    // This should probably be fixed in Traceur.
+    var typeName = typeAnnotation.typeToken && typeAnnotation.typeToken.value || (typeAnnotation.name && typeAnnotation.name.value) || null;
+
+    if (!typeName) {
+      return;
+    }
+
+    this.write_(this.normalizeType_(typeName));
     this.writeSpace_();
   };
 

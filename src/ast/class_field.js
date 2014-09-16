@@ -14,5 +14,8 @@ ClassField.prototype.type = CLASS_FIELD;
 ClassField.prototype.visit = function(visitor) {
   visitor.visitClassField(this);
 };
+ClassField.prototype.transform = function(transformer) {
+  return this;
+};
 
 module.exports = ClassField;

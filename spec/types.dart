@@ -17,4 +17,11 @@ class Foo {
   int sum() {
     return this.a + this.b;
   }
+  typedVariables() {
+    string foo = 'foo';
+    bool typed;
+    var untyped;
+    string oneTyped = 'one';
+    bool another = true;
+  }
 }
