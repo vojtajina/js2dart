@@ -18,10 +18,10 @@ class Foo {
     return this.a + this.b;
   }
   typedVariables() {
-    string foo = 'foo';
+    String foo = 'foo';
     bool typed;
     var untyped;
-    string oneTyped = 'one';
+    String oneTyped = 'one';
     bool another = true;
   }
 }

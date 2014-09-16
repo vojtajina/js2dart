@@ -106,6 +106,10 @@ function DartTreeWriter() {
       return 'bool';
     }
 
+    if (typeName === 'string') {
+      return 'String';
+    }
+
     return typeName;
   };
 
