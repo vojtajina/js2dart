@@ -15,8 +15,7 @@ function EcmaScript6ToDartCompiler() {
   NodeCompiler.call(this, options);
 
   this.compile = function(source, filename) {
-    this.options_.filename = filename || '<unknown_file>';
-    return this.write(this.transform(this.parse(source)));
+    return this.write(this.transform(this.parse(source, filename || '<unknown_file>')));
   }
 
   this.transform = function(tree) {
