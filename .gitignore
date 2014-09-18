@@ -1,3 +1,5 @@
 node_modules
 packages
 .last_spec_pointer
+pubspec.lock
+spec/*.dart
