@@ -1,21 +1,9 @@
-var token = traceur.syntax.TokenType;
-var OPEN_PAREN = token.OPEN_PAREN;
-var CLOSE_PAREN = token.CLOSE_PAREN;
-var IMPORT = token.IMPORT;
-var SEMI_COLON = token.SEMI_COLON;
-var STAR = token.STAR;
-var OPEN_CURLY = token.OPEN_CURLY;
-var CLOSE_CURLY = token.CLOSE_CURLY;
-var COMMA = token.COMMA;
-var FROM = traceur.syntax.PredefinedName.FROM;
-var AT = token.AT;
-var EQUAL = token.EQUAL;
+import {CONSTRUCTOR, FROM} from 'traceur/src/syntax/PredefinedName';
+import {EQUAL_EQUAL_EQUAL, OPEN_PAREN, CLOSE_PAREN, IMPORT, SEMI_COLON, STAR, OPEN_CURLY, CLOSE_CURLY, COMMA, AT, EQUAL} from 'traceur/src/syntax/TokenType';
 
-var JavaScriptParseTreeWriter = traceur.outputgeneration.ParseTreeWriter;
+import {ParseTreeWriter as JavaScriptParseTreeWriter} from 'traceur/src/outputgeneration/ParseTreeWriter';
 
-
-function DartTreeWriter() {
-  JavaScriptParseTreeWriter.call(this);
+export class DartTreeWriter extends JavaScriptParseTreeWriter {
 
   // VARIABLES - types
   // ```
@@ -23,7 +11,7 @@ function DartTreeWriter() {
   // ==>
   // bool foo = true;
   // ```
-  this.visitVariableDeclarationList = function(tree) {
+  visitVariableDeclarationList(tree) {
     // Write `var`, only if no type declaration.
     if (!tree.declarations[0].typeAnnotation) {
       this.write_(tree.declarationType);
@@ -31,9 +19,9 @@ function DartTreeWriter() {
     }
 
     this.writeList_(tree.declarations, COMMA, true, 2);
-  };
+  }
 
-  this.visitVariableDeclaration = function(tree) {
+  visitVariableDeclaration(tree) {
     this.writeType_(tree.typeAnnotation);
     this.visitAny(tree.lvalue);
 
@@ -48,7 +36,7 @@ function DartTreeWriter() {
   // FUNCTIONS
   // - remove the "function" keyword
   // - type annotation infront
-  this.visitFunction_ = function(tree) {
+  visitFunction_(tree) {
     this.writeAnnotations_(tree.annotations);
     if (tree.isAsyncFunction()) {
       this.write_(tree.functionKind);
@@ -72,7 +60,7 @@ function DartTreeWriter() {
 
   // Class methods.
   // - type annotation infront
-  this.visitPropertyMethodAssignment = function (tree) {
+  visitPropertyMethodAssignment(tree) {
     this.writeAnnotations_(tree.annotations);
 
     if (tree.isStatic) {
@@ -97,7 +85,7 @@ function DartTreeWriter() {
     this.visitAny(tree.body);
   }
 
-  this.normalizeType_ = function(typeName) {
+  normalizeType_(typeName) {
     if (typeName === 'number') {
       return 'int';
     }
@@ -111,11 +99,11 @@ function DartTreeWriter() {
     }
 
     return typeName;
-  };
+  }
 
   // FUNCTION/METHOD ARGUMENTS
   // - type infront of the arg name
-  this.visitBindingElement = function(tree) {
+  visitBindingElement(tree) {
     // TODO(vojta): This is awful, just copy/pasted from Traceur,
     // we should still clean it up.
     var typeAnnotation = this.currentParameterTypeAnnotation_;
@@ -131,9 +119,9 @@ function DartTreeWriter() {
       this.writeSpace_();
       this.visitAny(tree.initializer);
     }
-  };
+  }
 
-  this.visitClassField = function(tree) {
+  visitClassField(tree) {
     this.writeType_(tree.typeAnnotation);
 
     if (!tree.typeAnnotation) {
@@ -142,9 +130,9 @@ function DartTreeWriter() {
 
     this.write_(tree.identifier);
     this.write_(SEMI_COLON);
-  };
+  }
 
-  this.writeType_ = function(typeAnnotation) {
+  writeType_(typeAnnotation) {
     if (!typeAnnotation) {
       return;
     }
@@ -159,15 +147,14 @@ function DartTreeWriter() {
 
     this.write_(this.normalizeType_(typeName));
     this.writeSpace_();
-  };
-
+  }
 
   // EXPORTS
   // - ignore "export"
-  this.visitExportDeclaration = function(tree) {
+  visitExportDeclaration(tree) {
     this.writeAnnotations_(tree.annotations);
     this.visitAny(tree.declaration);
-  };
+  }
 
   // visitExportDefault
   // visitNamedExport
@@ -177,7 +164,7 @@ function DartTreeWriter() {
 
 
   // IMPORTS
-  this.visitImportDeclaration = function(tree) {
+  visitImportDeclaration(tree) {
     this.write_(IMPORT);
     this.writeSpace_();
     this.visitAny(tree.moduleSpecifier);
@@ -194,37 +181,37 @@ function DartTreeWriter() {
     }
 
     this.write_(SEMI_COLON);
-  };
+  }
 
   // Translate './foo' -> './foo.dart'
-  this.transformModuleUrl = function(url) {
+  transformModuleUrl(url) {
     return "'" + url.substring(1, url.length - 1) + ".dart'";
-  };
+  }
 
-  this.visitModuleSpecifier = function(tree) {
+  visitModuleSpecifier(tree) {
     this.write_(this.transformModuleUrl(tree.token.value));
-  };
+  }
 
-  this.visitImportSpecifier = function(tree) {
+  visitImportSpecifier(tree) {
     if (tree.name) {
       throw new Error('"as" syntax not supported');
     }
     this.visitAny(tree.binding);
-  };
+  }
 
-  this.visitImportSpecifierSet = function(tree) {
+  visitImportSpecifierSet(tree) {
     if (tree.specifiers.type == STAR) {
       throw new Error('"*" syntax not supported');
     } else {
       this.write_(' show ');
       this.writeList_(tree.specifiers, COMMA, false);
     }
-  };
+  }
 
 
   // ANNOTATIONS
   // TODO(vojta): this is just fixing a bug in Traceur, send a PR.
-  this.visitAnnotation = function(tree) {
+  visitAnnotation(tree) {
     this.write_(AT);
     this.visitAny(tree.name);
 
@@ -238,6 +225,3 @@ function DartTreeWriter() {
   }
 }
 
-DartTreeWriter.prototype = Object.create(JavaScriptParseTreeWriter.prototype);
-
-module.exports = DartTreeWriter;

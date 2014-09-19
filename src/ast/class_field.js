@@ -1,21 +1,20 @@
-var traceur = require('traceur');
-var ParseTree = traceur.syntax.trees.ParseTree;
+import {ParseTree} from 'traceur/src/syntax/trees/ParseTree';
 
 var CLASS_FIELD = 'CLASS_FIELD';
 
-function ClassField(location, identifier, typeAnnotation) {
-  this.location = location;
-  this.identifier = identifier;
-  this.typeAnnotation = typeAnnotation;
+export class ClassFieldParseTree extends ParseTree {
+  constructor(location, identifier, typeAnnotation) {
+    this.location = location;
+    this.identifier = identifier;
+    this.typeAnnotation = typeAnnotation;
+  }
+  get type() {
+    return CLASS_FIELD;
+  }
+  visit(visitor) {
+    visitor.visitClassField(this);
+  }
+  transform(transformer) {
+    return this;
+  }
 }
-
-ClassField.prototype = Object.create(ParseTree.prototype);
-ClassField.prototype.type = CLASS_FIELD;
-ClassField.prototype.visit = function(visitor) {
-  visitor.visitClassField(this);
-};
-ClassField.prototype.transform = function(transformer) {
-  return this;
-};
-
-module.exports = ClassField;

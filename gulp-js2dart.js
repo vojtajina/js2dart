@@ -2,6 +2,16 @@ var util = require('util');
 var through = require('through2');
 var HEADER = '// Compiled by js2dart\n' +
              '// Source file: %s\n\n';
+
+var neededModuleNames = [
+  'traceur',
+  // TODO: automatically scan all files and require them!
+  './build/js2dart/compiler',
+  './build/js2dart/class_transformer',
+  './build/js2dart/dart_writer',
+  './build/js2dart/ast/class_field'
+];
+
 module.exports = function js2dart(options) {
   var compiler;
   if (!options || !options.reload) {
@@ -19,7 +29,9 @@ module.exports = function js2dart(options) {
   });
 
   function createCompiler() {
-    var JS2DartCompiler = require('./src/compiler');
+    neededModuleNames.forEach(require);
+
+    var JS2DartCompiler = System.get('js2dart/compiler').EcmaScript6ToDartCompiler;
     compiler = new JS2DartCompiler();
   }
 

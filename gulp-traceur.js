@@ -25,7 +25,11 @@ module.exports = function (options) {
     }
 
     try {
-      var compiled = compiler.compile(file.contents.toString(), file.relative, file.relative);
+      var fileName = file.relative;
+      if (options.referrer) {
+        fileName = options.referrer + '/' + fileName;
+      }
+      var compiled = compiler.compile(file.contents.toString(), fileName, fileName);
       file.contents = new Buffer(compiled);
       this.push(file);
       done();

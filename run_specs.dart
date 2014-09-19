@@ -1,17 +1,17 @@
 // TODO(vojta): generate this file.
 
-import './spec/functions.dart' as m1;
-import './spec/classes.dart' as m2;
-import './spec/imports.dart' as m3;
-import './spec/annotations.dart' as m4;
-import './spec/equals.dart' as m5;
-import './spec/types.dart' as m6;
+import './build/spec/functions.dart' as m1;
+import './build/spec/classes.dart' as m2;
+import './build/spec/imports.dart' as m3;
+import './build/spec/annotations.dart' as m4;
+import './build/spec/equals.dart' as m5;
+import './build/spec/types.dart' as m6;
 
 import 'package:unittest/unittest.dart';
 
 // For ./spec/annotations.dart
 import 'dart:mirrors';
-import './spec/fixtures/annotations.dart' as annotations;
+import './build/spec/fixtures/annotations.dart' as annotations;
 
 void main() {
   test('./spec/functions.dart', () {
