@@ -25,3 +25,11 @@ class Foo {
         another: bool = true;
   }
 }
+
+function main() {
+  // TODO(vojta): test this better.
+  var f = new Foo(1, 2);
+  assert(f.sum() == 3);
+
+  f.typedVariables();
+}

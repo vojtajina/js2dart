@@ -7,6 +7,8 @@ var shell = require('gulp-shell');
 var clean = require('gulp-rimraf');
 var runSequence = require('run-sequence');
 var mergeStreams = require('event-stream').merge;
+var ejs = require('gulp-ejs');
+var glob = require('glob');
 
 var baseDir = __dirname;
 var traceurDir = baseDir+'/../traceur';
@@ -38,7 +40,8 @@ function install(gulp) {
 
   var srcFiles = baseDir + '/src/**/*.js';
   var specFiles = baseDir + '/spec/**/*.js';
-  var fixtureFiles = baseDir + '/spec/**/*.dart';
+  var specTemplateFiles = baseDir + '/spec/**/*.template';
+  var copyFiles = baseDir + '/spec/**/*.dart';
   var buildDir = baseDir + '/build';
 
   gulp.task('js2dart/clean', function() {
@@ -53,16 +56,30 @@ function install(gulp) {
       .pipe(gulp.dest(buildDir+'/js2dart'))
   });
 
-  gulp.task('js2dart/test/build', function() {
-    var transpileSrc =
-      gulp
+  gulp.task('js2dart/test/build', function(done) {
+    var transpileSrc = gulp
         .src(specFiles)
         .pipe(js2dart())
         .pipe(rename({extname: '.dart'}))
-        .pipe(gulp.dest(buildDir+'/spec'))
+        .pipe(gulp.dest(buildDir+'/spec'));
 
-    var copySrc = gulp.src(fixtureFiles).pipe(gulp.dest(buildDir+'/spec'));
-    return mergeStreams(transpileSrc, copySrc);
+    var copySrc = gulp.src(copyFiles).pipe(gulp.dest(buildDir+'/spec'));
+    var result = mergeStreams(transpileSrc, copySrc);
+    result.on('end', function() {
+      var specFiles = glob.sync('**/*_spec.dart', {
+        cwd: buildDir+'/spec'
+      });
+      gulp.src(specTemplateFiles)
+        .pipe(ejs({
+          files: specFiles
+        }))
+        .pipe(rename(function(path) {
+          path.basename = path.basename.replace(/\..*/g, '');
+          path.extname = '.dart';
+        }))
+        .pipe(gulp.dest(buildDir+'/spec'))
+        .on('end', done);
+    });
   });
 
   gulp.task('js2dart/test/run', shell.task([
