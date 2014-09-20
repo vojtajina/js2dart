@@ -1,12 +1,15 @@
 'use strict';
 var through = require('through2');
+var fs = require('fs');
+var path = require('path');
 
-module.exports = function (options) {
-  var compiler;
+module.exports = gulpTraceur;
+gulpTraceur.reload = reload;
+
+reload();
+
+function gulpTraceur(options) {
   options = options || {};
-  if (!options.reload) {
-    createCompiler();
-  }
 
   return through.obj(function (file, enc, done) {
     if (file.isNull()) {
@@ -18,12 +21,13 @@ module.exports = function (options) {
       throw new Error('gulp-traceur: Streaming not supported');
     }
 
+    // create a new compiler everytime, so that
+    // the sources of the compiler can be changed!
+    var compiler = createCompiler(
+      options,
+      module.dirname
+    );
     var ret;
-    if (options.reload) {
-      delete options.reload;
-      createCompiler();
-    }
-
     try {
       var fileName = file.relative;
       if (options.referrer) {
@@ -41,9 +45,47 @@ module.exports = function (options) {
       }
     }
   });
-
-  function createCompiler() {
-    var traceur = require('traceur');
-    compiler = new traceur.NodeCompiler(traceur.commonJSOptions(options));
-  }
 };
+
+function createCompiler(options, sourceRoot) {
+  var CompilerBase = System.get(System.map['traceur']+'/src/Compiler').Compiler;
+
+  // See traceur/src/NodeCompiler.js
+  // Needed here as we want to be able to reload
+  // traceur sources once they changed
+  function NodeCompiler() {
+    sourceRoot = sourceRoot || process.cwd();
+    CompilerBase.call(this, options, sourceRoot);
+  }
+
+  NodeCompiler.prototype = {
+    __proto__: CompilerBase.prototype,
+
+    resolveModuleName: function(filename) {
+      if (!filename)
+        return;
+      var moduleName = filename.replace(/\.js$/, '');
+      return path.relative(this.sourceRoot, moduleName).replace(/\\/g,'/');
+    },
+
+    sourceName: function(filename) {
+      return path.relative(this.sourceRoot, filename);
+    }
+  }
+
+  return new NodeCompiler();
+}
+
+// TODO: Also try to delete modules form require.cache
+// and then require('traceur') again...
+// Problem: don't know which modules to delete and which not...
+function reload() {
+  // see traceur/src/traceur.js
+  var filename = '../traceur/bin/traceur.js';
+  filename = path.join(path.dirname(module.filename), filename);
+  var data = fs.readFileSync(filename, 'utf8');
+  if (!data)
+    throw new Error('Failed to import ' + filename);
+
+  ('global', eval)(data);
+}

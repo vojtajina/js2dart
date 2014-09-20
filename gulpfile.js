@@ -21,9 +21,11 @@ function install(gulp) {
   // -- traceur
   gulp.task('traceur/clean', shell.task(['cd '+traceurDir+' && make clean']));
 
-  gulp.task('traceur/build', shell.task(
-    ['cd '+traceurDir+' && make bin/traceur.js bin/traceur-runtime.js']
-  ));
+  gulp.task('traceur/build', function() {
+    return shell.task(
+      ['cd '+traceurDir+' && make bin/traceur.js bin/traceur-runtime.js']
+    )().on('end', traceur.reload);
+  });
 
   // -- js2dart
 
@@ -34,8 +36,7 @@ function install(gulp) {
     modules: 'register',
     typeAssertions: false,
     moduleName: true,
-    referrer: 'js2dart',
-    reload: true
+    referrer: 'js2dart'
   };
 
   var srcFiles = baseDir + '/src/**/*.js';
@@ -54,6 +55,7 @@ function install(gulp) {
       .src(srcFiles)
       .pipe(traceur(traceurJsOptions))
       .pipe(gulp.dest(buildDir+'/js2dart'))
+      .on('end', js2dart.reload);
   });
 
   gulp.task('js2dart/test/build', function(done) {
@@ -90,23 +92,11 @@ function install(gulp) {
     return runSequence('js2dart/test/build', 'js2dart/test/run');
   });
 
-  // Needed so that gulp-js2dart and gulp-traceur pick up the newest changes
-  gulp.task('js2dart/refreshRequireCache', function(done) {
-    // TODO: This is not working right now / leads to additional errors
-    // - also needs to clear the module cache in System
-    // for (var prop in require.cache) {
-    //   if (/js2dart/.test(prop) || /traceur\//.test(prop)) {
-    //     delete require.cache[prop];
-    //   }
-    // }
-    done();
-  });
-
   // Note: will also watch traceur for changes!
   gulp.task('js2dart/watch', function() {
     // TODO: also execute some of Traceur's tests (but not all as they take a while...)
-    return watch([traceurFiles, srcFiles, specFiles], function(_, done) {
-      return runSequence('js2dart/refreshRequireCache', 'js2dart/test', done);
+    return watch([traceurFiles, srcFiles, specFiles, copyFiles], function(_, done) {
+      return runSequence('js2dart/test', done);
     });
   });
 }
