@@ -1,27 +1,28 @@
 var gulp = require('gulp');
-var rename = require('gulp-rename');
+var tasks = require('./gulp-tasks');
+var runSequence = require('run-sequence');
 var watch = require('gulp-watch');
-var js2dart = require('./gulp-js2dart');
-var shell = require('gulp-shell');
+var mergeStreams = require('event-stream').merge;
 
-gulp.task('spec/build', function() {
-  return gulp
-    .src('spec/**/*.js')
-    .pipe(js2dart())
-    .pipe(rename({extname: '.dart'}))
-    .pipe(gulp.dest('spec'))
+tasks.install(gulp);
+
+gulp.task('build', function() {
+  return runSequence('traceur/build', 'js2dart/build');
 });
 
-
-// TODO(vojta): Rebuild when changing src/* as well.
-gulp.task('spec/watch', function() {
-  return watch('spec/**/*.js')
-    .pipe(js2dart())
-    .pipe(rename({extname: '.dart'}))
-    .pipe(gulp.dest('spec'))
+gulp.task('test', ['build'], function() {
+  return runSequence('js2dart/test');
 });
 
-
-gulp.task('test', ['spec/build'], shell.task([
-  'dart --checked run_specs.dart'
-]));
+gulp.task('watch', function() {
+  var traceurWatch = watch(tasks.paths.traceurSrc, function(_, done) {
+    runSequence('traceur/build', 'js2dart/build', 'js2dart/test', done);
+  });
+  var js2dartWatch = watch(tasks.paths.js2dartSrc, function(_, done) {
+    runSequence('js2dart/build', 'js2dart/test', done);
+  });
+  var specWatch = watch(tasks.paths.specSrc, function(_, done) {
+    runSequence('js2dart/test', done);
+  });
+  return mergeStreams(traceurWatch, js2dartWatch, specWatch);
+});

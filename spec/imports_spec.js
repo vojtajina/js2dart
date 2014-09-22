@@ -1,6 +1,6 @@
-import {Foo, Bar} from './fixtures/foo';
+import {Foo, Bar} from './foo';
 // import {Foo as F} from './fixtures/foo';
-import fooModule from './fixtures/foo';
+import fooModule from './foo';
 
 
 function main() {

@@ -1,15 +1,19 @@
-import {Provide} from './fixtures/annotations';
+import annotations from './fixtures/annotations';
 
 class Inject {}
 class Bar {}
 
-@Provide('Foo')
+@annotations.Provide('Foo')
 class Foo {
   @Inject
   constructor() {}
 }
 
-@Provide(Foo)
+@annotations.Provide(Foo)
 function baz() {}
 
 function annotatedParams(@Inject(Foo) f, @Inject(Bar) b) {}
+
+function main() {
+  annotations.main();
+}
