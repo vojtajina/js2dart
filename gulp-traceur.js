@@ -4,11 +4,14 @@ var fs = require('fs');
 var path = require('path');
 
 module.exports = gulpTraceur;
-gulpTraceur.reload = reload;
-
-reload();
+gulpTraceur.reloadModules = function() {
+  loadModules(true);
+};
+gulpTraceur.loadModules = loadModules;
 
 function gulpTraceur(options) {
+  var lastLoadCounter = loadCounter;
+  var lastCompiler = null;
   options = options || {};
 
   return through.obj(function (file, enc, done) {
@@ -21,12 +24,7 @@ function gulpTraceur(options) {
       throw new Error('gulp-traceur: Streaming not supported');
     }
 
-    // create a new compiler everytime, so that
-    // the sources of the compiler can be changed!
-    var compiler = createCompiler(
-      options,
-      module.dirname
-    );
+    var compiler = createCompilerIfNeeded();
     var ret;
     try {
       var fileName = file.relative;
@@ -45,16 +43,25 @@ function gulpTraceur(options) {
       }
     }
   });
+
+  function createCompilerIfNeeded() {
+    loadModules(false);
+    if (!lastCompiler || lastLoadCounter !== loadCounter) {
+      lastLoadCounter = loadCounter;
+      var CompilerBase = System.get(System.map['traceur']+'/src/Compiler').Compiler;
+      var Compiler = createCompilerConstructor(CompilerBase);
+      lastCompiler = new Compiler(options);
+    }
+    return lastCompiler;
+  }
 };
 
-function createCompiler(options, sourceRoot) {
-  var CompilerBase = System.get(System.map['traceur']+'/src/Compiler').Compiler;
-
+function createCompilerConstructor(CompilerBase) {
   // See traceur/src/NodeCompiler.js
   // Needed here as we want to be able to reload
   // traceur sources once they changed
-  function NodeCompiler() {
-    sourceRoot = sourceRoot || process.cwd();
+  function NodeCompiler(options, sourceRoot) {
+    var sourceRoot = sourceRoot || process.cwd();
     CompilerBase.call(this, options, sourceRoot);
   }
 
@@ -73,13 +80,15 @@ function createCompiler(options, sourceRoot) {
     }
   }
 
-  return new NodeCompiler();
+  return NodeCompiler;
 }
 
-// TODO: Also try to delete modules form require.cache
-// and then require('traceur') again...
-// Problem: don't know which modules to delete and which not...
-function reload() {
+var loadCounter = 0;
+function loadModules(reload) {
+  if (global.System && !reload) {
+    return;
+  }
+  loadCounter++;
   // see traceur/src/traceur.js
   var filename = '../traceur/bin/traceur.js';
   filename = path.join(path.dirname(module.filename), filename);
